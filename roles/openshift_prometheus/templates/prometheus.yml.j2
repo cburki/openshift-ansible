@@ -166,6 +166,27 @@ scrape_configs:
     action: replace
     target_label: kubernetes_name
 
+# Scrape config for nodes (node-exporter)
+#
+# The relabeling allows the nodes to be configured via the following
+# annotations:
+# * `prometheus.io/scrape`: Only scrape the nodes that have a value of `true`
+# * `prometheus.io/port`: The port on which the metrics are exposed (9100)
+#
+# Port 9100 needs to be open in the firewall on all nodes
+- job_name: 'node-exporter'
+  kubernetes_sd_configs:
+    - role: pod
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+    action: keep
+    regex: true
+  - source_labels: [__meta_kubernetes_pod_namespace, __meta_kubernetes_pod_label_name]
+    separator: '/'
+    target_label: job
+  - source_labels: [__meta_kubernetes_pod_node_name]
+    target_label: node
+
 alerting:
   alertmanagers:
   - scheme: http
